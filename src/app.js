@@ -10,7 +10,7 @@ const server = http.createServer((request, response) => {
     const isOtherParamsPresent = Array.from(urlParams.keys()).some(param => param !== 'hello');
 
     if (isOtherParamsPresent) {
-        response.statusCode = 500;
+        response.status = 500;
         response.end();
         return;
     }
@@ -21,15 +21,25 @@ const server = http.createServer((request, response) => {
         if (helloParam.trim() === "") {
             response.status = 400;
             response.statusMessage = "OK";
-            response.header = ("Content-Type", "text/plain");
+            response.header = "Content-Type: text/plain";
             response.write("Enter a name");
             response.end();
 
             return;
-        } else {
+        } 
+        
+    if (request.url === "/?users") {
+        response.status = 200;
+        response.statusMessage = "OK";
+        response.header = "Content-Type: application/json";
+        response.write(getUsers());
+        response.end();
+        return;
+    }
+        else {
             response.status = 200;
             response.statusMessage = "OK";
-            response.header = ("Content-Type", "text/plain");
+            response.header = "Content-Type: text/plain";
             response.write("Hello " + helloParam);
             response.end();
 
@@ -37,15 +47,6 @@ const server = http.createServer((request, response) => {
         }
     }
 
-    if (request.url === "/?users") {
-        response.statusCode = 200;
-        response.statusMessage = "OK";
-        response.setHeader = ("Content-Type", "application/json");
-        response.write(getUsers());
-        response.end();
-
-        return;
-    }
 
     response.status = 200;
     response.statusMessage = "OK";
