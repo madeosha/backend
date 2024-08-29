@@ -37,7 +37,7 @@ const server = http.createServer((request, response) => {
         }
     }
 
-    if (request.url === "/users") {
+    if (request.url === "/?users") {
         response.statusCode = 200;
         response.statusMessage = "OK";
         response.setHeader = ("Content-Type", "application/json");
