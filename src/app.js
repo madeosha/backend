@@ -1,60 +1,44 @@
-const http = require('http');
-const getUsers = require("./modules/users");
+const http = require("http");
+const fs = require("fs");
+const url = require("url");
 
-const server = http.createServer((request, response) => {
+const hostname = "127.0.0.1";
+const port = 3003;
 
-    const url = new URL(request.url, 'http://127.0.0.1:3003');
-    const urlParams = url.searchParams;
+const server = http.createServer((req, res) => {
+    const queryObject = url.parse(req.url, true).query;
 
-    // Проверить, есть ли какие-либо параметры, кроме 'hello'
-    const isOtherParamsPresent = Array.from(urlParams.keys()).some(param => param !== 'hello');
-
-    if (isOtherParamsPresent) {
-        response.status = 500;
-        response.end();
-        return;
-    }
-
-    const helloParam = url.searchParams.get('hello');
-
-    if (helloParam !== null) {
-        if (helloParam.trim() === "") {
-            response.status = 400;
-            response.statusMessage = "OK";
-            response.header = "Content-Type: text/plain";
-            response.write("Enter a name");
-            response.end();
-
-            return;
-        } 
-        
-    if (request.url === "/?users") {
-        response.status = 200;
-        response.statusMessage = "OK";
-        response.header = "Content-Type: application/json";
-        response.write(getUsers());
-        response.end();
-        return;
-    }
-        else {
-            response.status = 200;
-            response.statusMessage = "OK";
-            response.header = "Content-Type: text/plain";
-            response.write("Hello " + helloParam);
-            response.end();
-
-            return;
+    if (queryObject.hello !== undefined) {
+      if (queryObject.hello) {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "text/plain");
+        res.end(`Hello, ${queryObject.hello}`);
+      } else {
+        res.statusCode = 400;
+        res.setHeader("Content-Type", "text/plain");
+        res.end("Enter a name");
+      }
+    } else if (queryObject.users !== undefined) {
+      fs.readFile("src/data/users.json", (err, data) => {
+        if (err) {
+          res.statusCode = 500;
+          res.end();
+        } else {
+          res.statusCode = 200;
+          res.setHeader("Content-Type", "application/json");
+          res.end(data);
         }
+      });
+    } else if (Object.keys(queryObject).length === 0) {
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "text/plain");
+      res.end("Hello, World!");
+    } else {
+      res.statusCode = 500;
+      res.end();
     }
-
-
-    response.status = 200;
-    response.statusMessage = "OK";
-    response.header = ("Content-Type", "text/plain");
-    response.write("Hello World!");
-    response.end();
 });
 
-server.listen(3003, () => {
-    console.log("Сервер запущен по адресу http://127.0.0.1:3003");
+server.listen(port, hostname, () => {
+  console.log(`Server running at http://${hostname}:${port}/`);
 });
