@@ -2,15 +2,28 @@ const express = require("express");
 const dotenv = require("dotenv");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const mongoose = require("mongoose");
 const userRouter = require("./routes/users");
 
 // Вызываем функцию конфигурации
 dotenv.config();
 
-const app = express();
-
 // Адрес сервера и порт
-const { PORT = 3005, API_URL = "http://127.0.0.1" } = process.env;
+const {
+  PORT = 3005,
+  API_URL = "http://127.0.0.1",
+  MONGO_URL = "mongodb://localhost:27017/backend",
+} = process.env;
+
+// Подключение к БД
+try {
+  mongoose.connect(MONGO_URL);
+  console.log("Success connected to MongoDb");
+} catch (error) {
+  console.log(error);
+}
+
+const app = express();
 
 // Функция обработки данных
 const helloWorld = (request, response) => {
@@ -36,4 +49,3 @@ app.use(userRouter);
 app.listen(PORT, () => {
   console.log(`Сервер запущен по адресу ${API_URL}:${PORT}`);
 });
-
