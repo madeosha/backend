@@ -1,44 +1,39 @@
-const http = require("http");
-const fs = require("fs");
-const url = require("url");
+const express = require("express");
+const dotenv = require("dotenv");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const userRouter = require("./routes/users");
 
-const hostname = "127.0.0.1";
-const port = 3003;
+// Вызываем функцию конфигурации
+dotenv.config();
 
-const server = http.createServer((req, res) => {
-    const queryObject = url.parse(req.url, true).query;
+const app = express();
 
-    if (queryObject.hello !== undefined) {
-      if (queryObject.hello) {
-        res.statusCode = 200;
-        res.setHeader("Content-Type", "text/plain");
-        res.end(`Hello, ${queryObject.hello}`);
-      } else {
-        res.statusCode = 400;
-        res.setHeader("Content-Type", "text/plain");
-        res.end("Enter a name");
-      }
-    } else if (queryObject.users !== undefined) {
-      fs.readFile("src/data/users.json", (err, data) => {
-        if (err) {
-          res.statusCode = 500;
-          res.end();
-        } else {
-          res.statusCode = 200;
-          res.setHeader("Content-Type", "application/json");
-          res.end(data);
-        }
-      });
-    } else if (Object.keys(queryObject).length === 0) {
-      res.statusCode = 200;
-      res.setHeader("Content-Type", "text/plain");
-      res.end("Hello, World!");
-    } else {
-      res.statusCode = 500;
-      res.end();
-    }
+// Адрес сервера и порт
+const { PORT = 3005, API_URL = "http://127.0.0.1" } = process.env;
+
+// Функция обработки данных
+const helloWorld = (request, response) => {
+  response.status(200);
+  response.send("Hello, World");
+};
+
+// Обработка get-запроса
+app.get("/", helloWorld);
+
+// Обработка post-pапроса
+app.post("/", (request, response) => {
+  response.status(200);
+  response.send("Hello from post");
 });
 
-server.listen(port, hostname, () => {
-  console.log(`Server running at http://${hostname}:${port}/`);
+// с помощью app.use используем роутер и body-parser (помогает обрабатывать данные, которые приходят в теле сообщения)
+app.use(cors());
+app.use(bodyParser.json());
+app.use(userRouter);
+
+// Запускаем сервер
+app.listen(PORT, () => {
+  console.log(`Сервер запущен по адресу ${API_URL}:${PORT}`);
 });
+
