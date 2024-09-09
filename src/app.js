@@ -1,44 +1,60 @@
-const http = require("http");
-const fs = require("fs");
-const url = require("url");
+const express = require("express");
+const dotenv = require("dotenv");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const mongoose = require("mongoose");
+const userRouter = require("./routes/users");
+const bookRouter = require("./routes/books");
 
-const hostname = "127.0.0.1";
-const port = 3003;
+// Вызываем функцию конфигурации
+dotenv.config();
 
-const server = http.createServer((req, res) => {
-    const queryObject = url.parse(req.url, true).query;
+// Адрес сервера и порт
+const {
+  PORT = 3005,
+  API_URL = "http://127.0.0.1",
+  MONGO_URL = "mongodb://localhost:27017/backend",
+} = process.env;
 
-    if (queryObject.hello !== undefined) {
-      if (queryObject.hello) {
-        res.statusCode = 200;
-        res.setHeader("Content-Type", "text/plain");
-        res.end(`Hello, ${queryObject.hello}`);
-      } else {
-        res.statusCode = 400;
-        res.setHeader("Content-Type", "text/plain");
-        res.end("Enter a name");
-      }
-    } else if (queryObject.users !== undefined) {
-      fs.readFile("src/data/users.json", (err, data) => {
-        if (err) {
-          res.statusCode = 500;
-          res.end();
-        } else {
-          res.statusCode = 200;
-          res.setHeader("Content-Type", "application/json");
-          res.end(data);
-        }
-      });
-    } else if (Object.keys(queryObject).length === 0) {
-      res.statusCode = 200;
-      res.setHeader("Content-Type", "text/plain");
-      res.end("Hello, World!");
-    } else {
-      res.statusCode = 500;
-      res.end();
-    }
+// Подключение к БД
+try {
+  mongoose.connect(MONGO_URL);
+  console.log("Success connected to MongoDb");
+} catch (error) {
+  console.log(error);
+}
+
+const app = express();
+
+// Функция обработки данных
+const helloWorld = (request, response) => {
+  response.status(200);
+  response.send("Hello, World");
+};
+
+// Опции для настройки CORS
+const corsOptions = {
+  origin: "http://127.0.0.1", // Разрешить доступ только с этого домена
+  methods: "GET,PUT,POST,DELETE", // Разрешенные HTTP-методы
+  allowedHeaders: ["Content-Type", "Authorization"], // Разрешенные заголовки
+};
+
+// Обработка get-запроса
+app.get("/", helloWorld);
+
+// Обработка post-pапроса
+app.post("/", (request, response) => {
+  response.status(200);
+  response.send("Hello from post");
 });
 
-server.listen(port, hostname, () => {
-  console.log(`Server running at http://${hostname}:${port}/`);
+// с помощью app.use используем роутер и body-parser (помогает обрабатывать данные, которые приходят в теле сообщения)
+app.use(cors(corsOptions));
+app.use(bodyParser.json());
+app.use(userRouter);
+app.use(bookRouter);
+
+// Запускаем сервер
+app.listen(PORT, () => {
+  console.log(`Сервер запущен по адресу ${API_URL}:${PORT}`);
 });
